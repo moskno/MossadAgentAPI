@@ -1,5 +1,12 @@
+using MossadAgentAPI.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.SqlServer;
+
+
 var builder = WebApplication.CreateBuilder(args);
 
+string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<MossadAgentContext>(options => options.UseSqlServer(connectionString));
 // Add services to the container.
 
 builder.Services.AddControllers();
