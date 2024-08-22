@@ -1,9 +1,12 @@
 ﻿using MossadAgentAPI.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace MossadAgentAPI.Models
 {
     public class Mission
     {
+        [Key]
+        public int Id { get; set; }
         public int AgentId { get; set; }
         public int TargetId { get; set; }
         public TimeOnly TimeLeft { get; set; }
