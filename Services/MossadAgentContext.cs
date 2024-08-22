@@ -46,7 +46,7 @@ namespace MossadAgentAPI.Services
             };
         }
         public DbSet<Agent> agents { get; set; }
-        //public DbSet<Mission> missions { get; set; }
+        public DbSet<Mission> missions { get; set; }
         public DbSet<Target> targets { get; set; }
 
     }

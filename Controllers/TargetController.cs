@@ -11,13 +11,13 @@ namespace MossadAgentAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AgentController : ControllerBase
+    public class TargetController : ControllerBase
     {
         private readonly MossadAgentContext _context;
-        private readonly ILogger<AgentController> _logger;
+        private readonly ILogger<TargetController> _logger;
 
 
-        public AgentController(ILogger<AgentController> logger, MossadAgentContext context)
+        public TargetController(ILogger<TargetController> logger, MossadAgentContext context)
         {
 
             this._context = context;
@@ -25,55 +25,59 @@ namespace MossadAgentAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAgents()
+        public async Task<IActionResult> GetTargets()
         {
             int status = StatusCodes.Status200OK;
-            var agents = await _context.agents.Include(a => a.location)?.ToArrayAsync();
+            var targets = await _context.targets.Include(t => t.location)?.ToArrayAsync();
             return StatusCode(
                 status,
-                HttpUtils.Response(status, new { agents = agents })
+                HttpUtils.Response(status, new { targets = targets })
                 );
         }
 
         [HttpPost]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status201Created)]
-        public async Task<IActionResult> CreateAgent(Agent agent)
+        public async Task<IActionResult> CreateTarget(Target target)
         {
             int status;
-            agent.Status = AgentStatus.Inactive;
-            this._context.agents.Add(agent);
+            target.Status = TargetStatus.Live;
+            this._context.targets.Add(target);
             await this._context.SaveChangesAsync();
             status = StatusCodes.Status201Created;
             return StatusCode(
                 status,
-                HttpUtils.Response(status, new { agent = agent })
+                HttpUtils.Response(status, new { target = target })
                 );
         }
 
         [HttpPut("{id}/pin")]
         [Produces("application/json")]
-        public async Task<IActionResult> UpdateAgentLocation(int id, Location location)
+        public async Task<IActionResult> UpdateTargetLocation(int id, Location location)
         {
+            //if (Location.IsNullOrEmpty(location.ToString()))
+            //{
+            //    return BadRequest("The direction field is required.");
+            //}
             int status;
-            Agent agent = this._context.agents.FirstOrDefault(ag => ag.Id == id);
-            if (agent == null)
+            Target target = this._context.targets.FirstOrDefault(tar => tar.Id == id);
+            if (target == null)
             {
                 status = StatusCodes.Status404NotFound;
-                return StatusCode(status, HttpUtils.Response(status, "agent not found"));
+                return StatusCode(status, HttpUtils.Response(status, "status not found"));
             }
-            agent.location = location;
-            this._context.agents.Update(agent);
+            target.location = location;
+            this._context.targets.Update(target);
             await this._context.SaveChangesAsync();
 
             status = StatusCodes.Status200OK;
-            return StatusCode(status, HttpUtils.Response(status, new { agent = agent }));
+            return StatusCode(status, HttpUtils.Response(status, new { target = target }));
         }
 
         [HttpPut("{id}/move")]
         [Produces("application/json")]
 
-        public async Task<IActionResult> MoveAgentLocation(int id,[FromBody] Direction direction)
+        public async Task<IActionResult> MoveTargetLocation(int id,[FromBody] Direction direction)
         {
             string direct = direction.direction;
             if (string.IsNullOrEmpty(direct))
@@ -85,22 +89,17 @@ namespace MossadAgentAPI.Controllers
                 return BadRequest("Invalid direction specified.");
             }
             int status;
-            Agent agent = await this._context.agents.Include(ag => ag.location).FirstOrDefaultAsync(ag => ag.Id == id);
-            if (agent == null)
+            Target target = await this._context.targets.Include(tar => tar.location).FirstOrDefaultAsync(tar => tar.Id == id);
+            if (target == null)
             {
                 status = StatusCodes.Status404NotFound;
-                return StatusCode(status, HttpUtils.Response(status, "agent not found"));
+                return StatusCode(status, HttpUtils.Response(status, "target not found"));
             }
-            DirectionService.DirectionActions[direct](agent.location);
-            if (!TryValidateModel(agent.location))
-            {
-                return BadRequest(HttpUtils.Response(StatusCodes.Status400BadRequest,
-                    new { message = "Movement would result in going out of bounds.", currentLocation = agent.location }));
-            }
-            this._context.agents.Update(agent);
+            DirectionService.DirectionActions[direct](target.location);
+            this._context.targets.Update(target);
             await this._context.SaveChangesAsync();
             status = StatusCodes.Status200OK;
-            return StatusCode(status, HttpUtils.Response(status, new { agent = agent }));
+            return StatusCode(status, HttpUtils.Response(status, new { target = target }));
         }
 
     }
