@@ -15,13 +15,15 @@ namespace MossadAgentAPI.Controllers
     {
         private readonly MossadAgentContext _context;
         private readonly ILogger<AgentController> _logger;
+        private readonly MissionService _missionService;
 
 
-        public AgentController(ILogger<AgentController> logger, MossadAgentContext context)
+        public AgentController(ILogger<AgentController> logger, MossadAgentContext context, MissionService missionService)
         {
 
             this._context = context;
             this._logger = logger;
+            this._missionService = missionService;   
         }
 
         [HttpGet]
@@ -35,21 +37,22 @@ namespace MossadAgentAPI.Controllers
                 );
         }
 
-        [HttpPost]
-        [Produces("application/json")]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        public async Task<IActionResult> CreateAgent(Agent agent)
-        {
-            int status;
-            agent.Status = AgentStatus.Inactive;
-            this._context.agents.Add(agent);
-            await this._context.SaveChangesAsync();
-            status = StatusCodes.Status201Created;
-            return StatusCode(
-                status,
-                HttpUtils.Response(status, new { agent = agent })
-                );
-        }
+            [HttpPost]
+            [Produces("application/json")]
+            [ProducesResponseType(StatusCodes.Status201Created)]
+            public async Task<IActionResult> CreateAgent(Agent agent)
+            {
+                int status;
+                agent.Status = AgentStatus.Inactive;
+                this._context.agents.Add(agent);
+                await this._context.SaveChangesAsync();
+                this._missionService.CalculateMission(agent);
+                status = StatusCodes.Status201Created;
+                return StatusCode(
+                    status,
+                    HttpUtils.Response(status, new { agent = agent })
+                    );
+            }
 
         [HttpPut("{id}/pin")]
         [Produces("application/json")]
@@ -65,7 +68,7 @@ namespace MossadAgentAPI.Controllers
             agent.location = location;
             this._context.agents.Update(agent);
             await this._context.SaveChangesAsync();
-
+            this._missionService.CalculateMission(agent);
             status = StatusCodes.Status200OK;
             return StatusCode(status, HttpUtils.Response(status, new { agent = agent }));
         }
@@ -99,6 +102,7 @@ namespace MossadAgentAPI.Controllers
             }
             this._context.agents.Update(agent);
             await this._context.SaveChangesAsync();
+            this._missionService.CalculateMission(agent);
             status = StatusCodes.Status200OK;
             return StatusCode(status, HttpUtils.Response(status, new { agent = agent }));
         }

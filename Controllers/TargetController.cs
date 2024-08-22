@@ -15,13 +15,15 @@ namespace MossadAgentAPI.Controllers
     {
         private readonly MossadAgentContext _context;
         private readonly ILogger<TargetController> _logger;
+        private readonly MissionService _missionService;
 
 
-        public TargetController(ILogger<TargetController> logger, MossadAgentContext context)
+        public TargetController(ILogger<TargetController> logger, MossadAgentContext context, MissionService missionService)
         {
 
             this._context = context;
             this._logger = logger;
+            _missionService = missionService;
         }
 
         [HttpGet]
@@ -44,6 +46,7 @@ namespace MossadAgentAPI.Controllers
             target.Status = TargetStatus.Live;
             this._context.targets.Add(target);
             await this._context.SaveChangesAsync();
+            this._missionService.CalculateMission(target);
             status = StatusCodes.Status201Created;
             return StatusCode(
                 status,
@@ -69,7 +72,7 @@ namespace MossadAgentAPI.Controllers
             target.location = location;
             this._context.targets.Update(target);
             await this._context.SaveChangesAsync();
-
+            this._missionService.CalculateMission(target);
             status = StatusCodes.Status200OK;
             return StatusCode(status, HttpUtils.Response(status, new { target = target }));
         }
@@ -98,6 +101,7 @@ namespace MossadAgentAPI.Controllers
             DirectionService.DirectionActions[direct](target.location);
             this._context.targets.Update(target);
             await this._context.SaveChangesAsync();
+            this._missionService.CalculateMission(target);
             status = StatusCodes.Status200OK;
             return StatusCode(status, HttpUtils.Response(status, new { target = target }));
         }

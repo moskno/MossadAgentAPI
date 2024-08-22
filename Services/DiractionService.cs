@@ -1,5 +1,4 @@
 ﻿using MossadAgentAPI.Models;
-
 namespace MossadAgentAPI.Services
 {
     public static class DirectionService
