@@ -15,6 +15,9 @@ builder.Services.AddSwaggerGen();
 string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<MossadAgentContext>(options => options.UseSqlServer(connectionString));
 
+builder.Services.AddScoped<DistanceCalculate>();
+builder.Services.AddScoped<MissionService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

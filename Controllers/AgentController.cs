@@ -30,41 +30,50 @@ namespace MossadAgentAPI.Controllers
         public async Task<IActionResult> GetAgents()
         {
             int status = StatusCodes.Status200OK;
-            var agents = await _context.agents.Include(a => a.location)?.ToArrayAsync();
+            var agents = await this._context.agents.Include(a => a.location)?.ToArrayAsync();
             return StatusCode(
                 status,
                 HttpUtils.Response(status, new { agents = agents })
                 );
         }
 
-            [HttpPost]
-            [Produces("application/json")]
-            [ProducesResponseType(StatusCodes.Status201Created)]
-            public async Task<IActionResult> CreateAgent(Agent agent)
+        [HttpPost]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        public async Task<IActionResult> CreateAgent(Agent agent)
+        {
+            int status;
+            if (agent.location == null)
             {
-                int status;
-                agent.Status = AgentStatus.Inactive;
-                this._context.agents.Add(agent);
-                await this._context.SaveChangesAsync();
-                this._missionService.CalculateMissionA(agent);
-                status = StatusCodes.Status201Created;
-                return StatusCode(
-                    status,
-                    HttpUtils.Response(status, new { agent = agent })
-                    );
+                agent.location = new Location();
             }
+            agent.Status = AgentStatus.Inactive;
+            this._context.agents.Add(agent);
+            await this._context.SaveChangesAsync();
+            this._missionService.CalculateMissionA(agent);
+            status = StatusCodes.Status201Created;
+            return StatusCode(
+                status,
+                HttpUtils.Response(status, new { agent = agent })
+                );
+        }
 
         [HttpPut("{id}/pin")]
         [Produces("application/json")]
         public async Task<IActionResult> UpdateAgentLocation(int id, Location location)
         {
             int status;
+
             Agent agent = this._context.agents.FirstOrDefault(ag => ag.Id == id);
             if (agent == null)
             {
                 status = StatusCodes.Status404NotFound;
                 return StatusCode(status, HttpUtils.Response(status, "agent not found"));
             }
+            if (agent.location == null)
+            {
+                agent.location = new Location();
+            }   
             agent.location = location;
             this._context.agents.Update(agent);
             await this._context.SaveChangesAsync();
@@ -93,6 +102,10 @@ namespace MossadAgentAPI.Controllers
             {
                 status = StatusCodes.Status404NotFound;
                 return StatusCode(status, HttpUtils.Response(status, "agent not found"));
+            }
+            if (agent.location == null)
+            {
+                agent.location = new Location();
             }
             DirectionService.DirectionActions[direct](agent.location);
             if (!TryValidateModel(agent.location))

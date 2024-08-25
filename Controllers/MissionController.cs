@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using MossadAgentAPI.Controllers;
 using MossadAgentAPI.Services;
 using MossadAgentAPI.Models;
 using MossadAgentAPI.Enums;
@@ -59,21 +60,38 @@ namespace MossadAgentAPI.Controllers
         }
 
 
-        [HttpPost("/missions/update")]
+        [HttpPost("update")]
         public async Task<IActionResult> UpdateTimeLeft()
         {
             int status = StatusCodes.Status200OK;
             var missions = await _context.missions.ToArrayAsync();
             foreach ( Mission mission in missions)
             {
-                var agent = await _context.agents.Include(a => a.location).FirstOrDefaultAsync(a => a.Id == mission.AgentId);
-                var target = await _context.targets.Include(t => t.location).FirstOrDefaultAsync(t => t.Id == mission.AgentId);
-                if (agent == null || target == null)
+                if (mission.Status == MissionStatus.Active)
                 {
-                    return StatusCode(StatusCodes.Status404NotFound, "Agent or Target not found for mission");
+                    var agent = await _context.agents.Include(a => a.location).FirstOrDefaultAsync(a => a.Id == mission.AgentId);
+                    var target = await _context.targets.Include(t => t.location).FirstOrDefaultAsync(t => t.Id == mission.AgentId);
+                    if (agent == null || target == null)
+                    {
+                        return StatusCode(StatusCodes.Status404NotFound, "Agent or Target not found for mission");
+                    }
+                    mission.TimeLeft = this._distanceCalculate.CalculateDistance(agent.location, target.location);
+                    string MoveDirection = this._missionService.MovingDirection(agent.location, target.location);
+                    if (MoveDirection == null)
+                    {
+                        agent.Status = AgentStatus.Inactive;
+                        target.Status = TargetStatus.Die;
+                        target.location = null;
+                        mission.Status = MissionStatus.Completed;
+                        this._context.agents.Update(agent);
+                        this._context.targets.Update(target);
+                        this._context.missions.Update(mission);
+
+                    }
+                    DirectionService.DirectionActions[MoveDirection](agent.location);
+                    this._context.agents.Update(agent);
+                    await this._context.SaveChangesAsync();
                 }
-                mission.TimeLeft = this._distanceCalculate.CalculateDistance(agent.location, target.location);
-                await this._context.SaveChangesAsync();
             }
             return StatusCode(
                 status,

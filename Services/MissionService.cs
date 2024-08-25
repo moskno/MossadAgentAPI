@@ -2,6 +2,7 @@
 using MossadAgentAPI.Enums;
 using MossadAgentAPI.Models;
 using MossadAgentAPI.Services;
+using System.Reflection;
 
 namespace MossadAgentAPI.Services
 {
@@ -18,7 +19,7 @@ namespace MossadAgentAPI.Services
 
         public void CalculateMissionA(Agent agent)
         {
-            var targets = _context.targets.ToList();
+            var targets = _context.targets.Include(ag => ag.location).ToList();
             foreach (var target in targets) 
             {
                 var distance = _distanceCheck.CalculateDistance(agent.location, target.location);
@@ -28,10 +29,9 @@ namespace MossadAgentAPI.Services
                 }
             }
         }
-
         public void CalculateMissionT(Target target)
         {
-            var agents = _context.agents.ToList();
+            var agents = this._context.agents.Include(ta => ta.location).ToList();
             foreach (var agent in agents)
             {
                 var distance = _distanceCheck.CalculateDistance(agent.location, target.location);
@@ -54,10 +54,21 @@ namespace MossadAgentAPI.Services
             };
             this._context.missions.Add(mission);
             this._context.SaveChangesAsync();
-
         }
+        
+        public string MovingDirection(Location agentLoc, Location targetLoc)
+        {
+            int dirX = targetLoc.x - agentLoc.x;
+            int dirY = targetLoc.y - agentLoc.y;
 
+            string dir = "";
 
+            if (dirY < 0) { dir += "n"; }
+            if (dirY > 0) { dir += "s"; }
+            if (dirX > 0) { dir += "e"; }
+            if (dirX < 0) { dir += "w"; }
 
+            return dir;
+        }
     }
 }

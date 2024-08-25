@@ -43,6 +43,10 @@ namespace MossadAgentAPI.Controllers
         public async Task<IActionResult> CreateTarget(Target target)
         {
             int status;
+            if (target.location == null)
+            {
+                target.location = new Location();
+            }
             target.Status = TargetStatus.Live;
             this._context.targets.Add(target);
             await this._context.SaveChangesAsync();
@@ -68,6 +72,10 @@ namespace MossadAgentAPI.Controllers
             {
                 status = StatusCodes.Status404NotFound;
                 return StatusCode(status, HttpUtils.Response(status, "status not found"));
+            }
+            if (target.location == null)
+            {
+                target.location = new Location();
             }
             target.location = location;
             this._context.targets.Update(target);
@@ -98,7 +106,16 @@ namespace MossadAgentAPI.Controllers
                 status = StatusCodes.Status404NotFound;
                 return StatusCode(status, HttpUtils.Response(status, "target not found"));
             }
+            if (target.location == null)
+            {
+                target.location = new Location();
+            }
             DirectionService.DirectionActions[direct](target.location);
+            if (!TryValidateModel(target.location))
+            {
+                return BadRequest(HttpUtils.Response(StatusCodes.Status400BadRequest,
+                    new { message = "Movement would result in going out of bounds.", currentLocation = target.location }));
+            }
             this._context.targets.Update(target);
             await this._context.SaveChangesAsync();
             this._missionService.CalculateMissionT(target);

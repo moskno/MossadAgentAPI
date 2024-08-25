@@ -20,6 +20,10 @@ namespace MossadAgentAPI.Services
                     {
                     Seedagent();
                     }
+                if (missions.Count() == 0)
+                    {
+                    Seedmission();
+                    }
                 }
             }
             catch (Exception ex)
@@ -43,6 +47,13 @@ namespace MossadAgentAPI.Services
                 Nickname = "Islam",
                 Picture = "Url.df",
                 Status = Enums.AgentStatus.Active,
+            };
+        }
+        private void Seedmission()
+        {
+            Mission mission = new Mission
+            {
+
             };
         }
         public DbSet<Agent> agents { get; set; }
