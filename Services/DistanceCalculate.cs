@@ -2,7 +2,7 @@
 
 namespace MossadAgentAPI.Services
 {
-    public class DistanceCheck
+    public class DistanceCalculate
     {
         public double CalculateDistance(Location loc1, Location loc2)
         {

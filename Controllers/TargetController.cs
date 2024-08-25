@@ -46,7 +46,7 @@ namespace MossadAgentAPI.Controllers
             target.Status = TargetStatus.Live;
             this._context.targets.Add(target);
             await this._context.SaveChangesAsync();
-            this._missionService.CalculateMission(target);
+            this._missionService.CalculateMissionT(target);
             status = StatusCodes.Status201Created;
             return StatusCode(
                 status,
@@ -72,7 +72,7 @@ namespace MossadAgentAPI.Controllers
             target.location = location;
             this._context.targets.Update(target);
             await this._context.SaveChangesAsync();
-            this._missionService.CalculateMission(target);
+            this._missionService.CalculateMissionT(target);
             status = StatusCodes.Status200OK;
             return StatusCode(status, HttpUtils.Response(status, new { target = target }));
         }
@@ -101,7 +101,7 @@ namespace MossadAgentAPI.Controllers
             DirectionService.DirectionActions[direct](target.location);
             this._context.targets.Update(target);
             await this._context.SaveChangesAsync();
-            this._missionService.CalculateMission(target);
+            this._missionService.CalculateMissionT(target);
             status = StatusCodes.Status200OK;
             return StatusCode(status, HttpUtils.Response(status, new { target = target }));
         }
