@@ -125,6 +125,5 @@ namespace MossadAgentAPI.Controllers
             status = StatusCodes.Status200OK;
             return StatusCode(status, HttpUtils.Response(status, new { target = target }));
         }
-
     }
 }

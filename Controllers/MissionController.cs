@@ -41,51 +41,67 @@ namespace MossadAgentAPI.Controllers
                 );
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> GetMissionDetails()
-        //{
-        //    int status = StatusCodes.Status200OK;
-        //    var missions = await _context.missions.ToListAsync();
-        //    var missionDetails = new List<object>();
-        //    foreach (var mission in missions)
-        //    {
-        //        var agent = await _context.agents
-        //            .Include(a => a.location)
-        //            .FirstOrDefaultAsync(a => a.Id == mission.AgentId);
+        [HttpGet("details")]
+        public async Task<IActionResult> GetAllMissionDetails()
+        {
+            int status = StatusCodes.Status200OK;
+            var missions = await _context.missions.ToListAsync();
+            var missionDetails = await GetMissionDetailsAsync(missions);
+            return StatusCode(status, HttpUtils.Response(status, new { missionDetails }));
+        }
 
-        //        var target = await _context.targets
-        //            .Include(t => t.location)
-        //            .FirstOrDefaultAsync(t => t.Id == mission.TargetId);
+        [HttpGet("details/{id}")]
+        public async Task<IActionResult> GetMissionDetail(int id)
+        {
+            var missions = await _context.missions.Where(m => m.Id == id).ToListAsync();
+            if (!missions.Any())
+            {
+                return StatusCode(StatusCodes.Status404NotFound, "Mission not found");
+            }
+            var missionDetails = await GetMissionDetailsAsync(missions);
+            return StatusCode(StatusCodes.Status200OK, HttpUtils.Response(StatusCodes.Status200OK, new { missionDetails = missionDetails.First() }));
+        }
 
-        //        if (agent == null || target == null) continue;
-        //        var distance = _distanceCalculate.CalculateDistance(agent.location, target.location);
-        //        missionDetails.Add(new
-        //        {
-        //            MissionId = mission.Id,
-        //            AgentId = mission.AgentId,
-        //            AgentNickname = agent.Nickname,
-        //            AgentLocation = agent.location,
-        //            TargetId = mission.TargetId,
-        //            TargetName = target.Name,
-        //            TargetRole = target.Role,
-        //            TargetLocation = target.location,
-        //            Distance = distance,
-        //            TimeLeft = mission.TimeLeft,
-        //            ExecutionTime = mission.ExecutionTime,
-        //            Status = mission.Status
-        //        });
-        //    }
-        //    return StatusCode(
-        //        status,
-        //        HttpUtils.Response(status, new { missionDetails = missionDetails })
-        //    );
-        //}
+        private async Task<List<object>> GetMissionDetailsAsync(IEnumerable<Mission> missions)
+        {
+            var missionDetails = new List<object>();
+            foreach (var mission in missions)
+            {
+                var agent = await _context.agents
+                    .Include(a => a.location)
+                    .FirstOrDefaultAsync(a => a.Id == mission.AgentId);
+
+                var target = await _context.targets
+                    .Include(t => t.location)
+                    .FirstOrDefaultAsync(t => t.Id == mission.TargetId);
+
+                if (agent == null || target == null) continue;
+
+                var distance = _distanceCalculate.CalculateDistance(agent.location, target.location);
+                missionDetails.Add(new
+                {
+                    MissionId = mission.Id,
+                    AgentId = mission.AgentId,
+                    AgentNickname = agent.Nickname,
+                    AgentLocation = agent.location,
+                    TargetId = mission.TargetId,
+                    TargetName = target.Name,
+                    TargetRole = target.Role,
+                    TargetLocation = target.location,
+                    Distance = distance,
+                    TimeLeft = mission.TimeLeft,
+                    ExecutionTime = mission.ExecutionTime,
+                    Status = mission.Status
+                });
+            }
+            return missionDetails;
+        }
 
 
         [HttpPut("{id}")]
         [Produces("application/json")]
         public async Task<IActionResult> ActiveStatus(int id)
-            {
+                {
             int status;
             Mission mission = await this._context.missions.FirstOrDefaultAsync(mi => mi.Id == id);
             if (mission == null)
