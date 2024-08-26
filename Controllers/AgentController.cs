@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using MossadAgentAPI.Services;
 using MossadAgentAPI.Models;
 using MossadAgentAPI.Enums;
-using IronDomeApi.Utils;
 using System.Security.Cryptography.Xml;
 
 namespace MossadAgentAPI.Controllers
