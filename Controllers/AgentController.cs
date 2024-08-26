@@ -49,7 +49,10 @@ namespace MossadAgentAPI.Controllers
             agent.Status = AgentStatus.Inactive;
             this._context.agents.Add(agent);
             await this._context.SaveChangesAsync();
-            this._missionService.CalculateMissionA(agent);
+            await Task.Run(async () =>
+            {
+                await this._missionService.CalculateMissionAAsync(agent);
+            });
             status = StatusCodes.Status201Created;
             return StatusCode(
                 status,
@@ -76,7 +79,10 @@ namespace MossadAgentAPI.Controllers
             agent.location = location;
             this._context.agents.Update(agent);
             await this._context.SaveChangesAsync();
-            this._missionService.CalculateMissionA(agent);
+            await Task.Run(async () =>
+            {
+                await this._missionService.CalculateMissionAAsync(agent);
+            });
             status = StatusCodes.Status200OK;
             return StatusCode(status, HttpUtils.Response(status, new { agent = agent }));
         }
@@ -113,8 +119,11 @@ namespace MossadAgentAPI.Controllers
                     new { message = "Movement would result in going out of bounds.", currentLocation = agent.location }));
             }
             this._context.agents.Update(agent);
+            await Task.Run(async () =>
+            {
+                await this._missionService.CalculateMissionAAsync(agent);
+            });
             await this._context.SaveChangesAsync();
-            this._missionService.CalculateMissionA(agent);
             status = StatusCodes.Status200OK;
             return StatusCode(status, HttpUtils.Response(status, new { agent = agent }));
         }

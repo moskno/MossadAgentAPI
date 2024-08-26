@@ -49,8 +49,11 @@ namespace MossadAgentAPI.Controllers
             }
             target.Status = TargetStatus.Live;
             this._context.targets.Add(target);
+            await Task.Run(async () =>
+            {
+                await this._missionService.CalculateMissionTAsync(target);
+            });
             await this._context.SaveChangesAsync();
-            this._missionService.CalculateMissionT(target);
             status = StatusCodes.Status201Created;
             return StatusCode(
                 status,
@@ -80,7 +83,7 @@ namespace MossadAgentAPI.Controllers
             target.location = location;
             this._context.targets.Update(target);
             await this._context.SaveChangesAsync();
-            this._missionService.CalculateMissionT(target);
+            await Task.Run(async () => { await this._missionService.CalculateMissionTAsync(target); });
             status = StatusCodes.Status200OK;
             return StatusCode(status, HttpUtils.Response(status, new { target = target }));
         }
@@ -118,7 +121,7 @@ namespace MossadAgentAPI.Controllers
             }
             this._context.targets.Update(target);
             await this._context.SaveChangesAsync();
-            this._missionService.CalculateMissionT(target);
+            await Task.Run(async () => { await this._missionService.CalculateMissionTAsync(target); });
             status = StatusCodes.Status200OK;
             return StatusCode(status, HttpUtils.Response(status, new { target = target }));
         }

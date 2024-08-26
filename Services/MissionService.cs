@@ -17,49 +17,50 @@ namespace MossadAgentAPI.Services
             _distanceCheck = distanceCheck;
         }
 
-        public void CalculateMissionA(Agent agent)
+        public async Task CalculateMissionAAsync(Agent agent)
         {
-            var targets = _context.targets.Include(ag => ag.location).ToList();
-            foreach (var target in targets) 
+            var targets = await _context.targets.Include(ag => ag.location).ToListAsync();
+            foreach (var target in targets)
             {
-                CheckMission(agent, target);
+                var distance = _distanceCheck.CalculateDistance(agent.location, target.location);
+                if (distance < +200)
+                {
+                    await CreateMissionAsync(agent, target);
+                }
             }
         }
-        public void CalculateMissionT(Target target)
+        public async Task CalculateMissionTAsync(Target target)
         {
-            var agents = this._context.agents.Include(ta => ta.location).ToList();
+            var agents = await this._context.agents.Include(ta => ta.location).ToListAsync();
             foreach (var agent in agents)
             {
-                CheckMission(agent, target);
-            }
-        }
-
-        private void CheckMission(Agent agent, Target target)
-        {
-            var distance = _distanceCheck.CalculateDistance(agent.location, target.location);
-            if (distance< +200)
-            {
-                bool missionExists = _context.missions.Any(m => m.AgentId == agent.Id && m.TargetId == target.Id);
-
-                if (!missionExists)
+                var distance = _distanceCheck.CalculateDistance(agent.location, target.location);
+                if (distance < +200)
                 {
-                    CreateMission(agent, target);
+                    await CreateMissionAsync(agent, target);
                 }
             }
         }
 
-        private void CreateMission(Agent agent, Target target)
+        private async Task CreateMissionAsync(Agent agent, Target target)
         {
-            var mission = new Mission
+            try
             {
-                AgentId = agent.Id,
-                TargetId = target.Id,
-                TimeLeft = double.MaxValue,
-                ExecutionTime = TimeOnly.MinValue,
-                Status = MissionStatus.Ready
-            };
-            this._context.missions.Add(mission);
-            this._context.SaveChangesAsync();
+                var mission = new Mission
+                {
+                    AgentId = agent.Id,
+                    TargetId = target.Id,
+                    TimeLeft = double.MaxValue,
+                    ExecutionTime = TimeOnly.MinValue,
+                    Status = MissionStatus.Ready
+                };
+                this._context.missions.Add(mission);
+                await this._context.SaveChangesAsync();
+
+            }
+            catch (Exception ex) { }
+
+            
         }
         
         public string MovingDirection(Location agentLoc, Location targetLoc)
@@ -78,3 +79,42 @@ namespace MossadAgentAPI.Services
         }
     }
 }
+
+        //private async Task CalculateMissionsAsync<T>(IEnumerable<T> entities, Func<T, Task> checkAndCreateMission)
+        //{
+        //    foreach (var entity in entities)
+        //    {
+        //        await checkAndCreateMission(entity);
+        //    }
+        //}
+
+        //public async Task CalculateMissionAAsync(Agent agent)
+        //{
+        //    var targets = await _context.targets.Include(ag => ag.location).ToListAsync();
+        //    await CalculateMissionsAsync(targets, async target =>
+        //    {
+        //        await CheckMissionAsync(agent, target);
+        //    });
+        //}
+        //public async Task CalculateMissionTAsync(Target target)
+        //{
+        //    var agents = await this._context.agents.Include(ta => ta.location).ToListAsync();
+        //    await CalculateMissionsAsync(agents, async agent =>
+        //    {
+        //        await CheckMissionAsync(agent, target);
+        //    });
+        //}
+
+        //private async Task CheckMissionAsync(Agent agent, Target target)
+        //{
+        //    var distance = _distanceCheck.CalculateDistance(agent.location, target.location);
+        //    if (distance < 200)
+        //    {
+        //        bool missionExists = await _context.missions.AnyAsync(m => m.AgentId == agent.Id && m.TargetId == target.Id);
+
+        //        if (!missionExists)
+        //        {
+        //            await CreateMissionAsync(agent, target);
+        //        }
+        //    }
+        //}

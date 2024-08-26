@@ -41,55 +41,53 @@ namespace MossadAgentAPI.Controllers
                 );
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetMissionDetails()
-        {
-            int status = StatusCodes.Status200OK;
-            var missions = await _context.missions.ToListAsync();
-            var missionDetails = new List<object>();
-            foreach (var mission in missions)
-            {
-                var agent = await _context.agents
-                    .Include(a => a.Location)
-                    .FirstOrDefaultAsync(a => a.Id == mission.AgentId);
+        //[HttpGet]
+        //public async Task<IActionResult> GetMissionDetails()
+        //{
+        //    int status = StatusCodes.Status200OK;
+        //    var missions = await _context.missions.ToListAsync();
+        //    var missionDetails = new List<object>();
+        //    foreach (var mission in missions)
+        //    {
+        //        var agent = await _context.agents
+        //            .Include(a => a.location)
+        //            .FirstOrDefaultAsync(a => a.Id == mission.AgentId);
 
-                var target = await _context.Targets
-                    .Include(t => t.Location)
-                    .FirstOrDefaultAsync(t => t.Id == mission.TargetId);
+        //        var target = await _context.targets
+        //            .Include(t => t.location)
+        //            .FirstOrDefaultAsync(t => t.Id == mission.TargetId);
 
-                if (agent == null || target == null) continue;
-
-                var distance = _distanceCalculate.CalculateDistance(agent.Location, target.Location);
-                missionDetails.Add(new
-                {
-                    MissionId = mission.Id,
-                    AgentId = mission.AgentId,
-                    AgentNickname = agent.Nickname,
-                    AgentLocation = agent.Location,
-                    TargetId = mission.TargetId,
-                    TargetName = target.Name,
-                    TargetRole = target.Role,
-                    TargetLocation = target.Location,
-                    Distance = distance,
-                    TimeLeft = mission.TimeLeft,
-                    ExecutionTime = mission.ExecutionTime,
-                    Status = mission.Status
-                });
-            }
-
-            return StatusCode(
-                status,
-                HttpUtils.Response(status, new { missionDetails = missionDetails })
-            );
-        }
+        //        if (agent == null || target == null) continue;
+        //        var distance = _distanceCalculate.CalculateDistance(agent.location, target.location);
+        //        missionDetails.Add(new
+        //        {
+        //            MissionId = mission.Id,
+        //            AgentId = mission.AgentId,
+        //            AgentNickname = agent.Nickname,
+        //            AgentLocation = agent.location,
+        //            TargetId = mission.TargetId,
+        //            TargetName = target.Name,
+        //            TargetRole = target.Role,
+        //            TargetLocation = target.location,
+        //            Distance = distance,
+        //            TimeLeft = mission.TimeLeft,
+        //            ExecutionTime = mission.ExecutionTime,
+        //            Status = mission.Status
+        //        });
+        //    }
+        //    return StatusCode(
+        //        status,
+        //        HttpUtils.Response(status, new { missionDetails = missionDetails })
+        //    );
+        //}
 
 
         [HttpPut("{id}")]
         [Produces("application/json")]
         public async Task<IActionResult> ActiveStatus(int id)
-        {
+            {
             int status;
-            Mission mission = this._context.missions.FirstOrDefault(mi => mi.Id == id);
+            Mission mission = await this._context.missions.FirstOrDefaultAsync(mi => mi.Id == id);
             if (mission == null)
             {
                 status = StatusCodes.Status404NotFound;
@@ -99,6 +97,7 @@ namespace MossadAgentAPI.Controllers
             agent.Status = AgentStatus.Active;
             mission.Status = MissionStatus.Active;
             this._context.missions.Update(mission);
+            this._context.agents.Update(agent);
             await this._context.SaveChangesAsync();
             status = StatusCodes.Status200OK;
             return StatusCode(status, HttpUtils.Response(status, new { mission = mission }));
