@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using MossadAgentAPI.Services;
 using MossadAgentAPI.Models;
 using MossadAgentAPI.Enums;
-using System.Security.Cryptography.Xml;
+using MossadAgentAPI.Utils;
 
 namespace MossadAgentAPI.Controllers
 {
@@ -29,7 +29,7 @@ namespace MossadAgentAPI.Controllers
         public async Task<IActionResult> GetAgents()
         {
             int status = StatusCodes.Status200OK;
-            var agents = await this._context.agents.Include(a => a.location)?.ToArrayAsync();
+            var agents = await this._context.agents.Include(a => a.location).ToArrayAsync();
             return StatusCode(
                 status,
                 HttpUtils.Response(status, new { agents = agents })

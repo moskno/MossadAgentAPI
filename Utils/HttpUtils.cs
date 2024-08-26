@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace IronDomeApi.Utils
+namespace MossadAgentAPI.Utils
 {
     [ApiController]
     public static class HttpUtils

@@ -5,9 +5,10 @@ using MossadAgentAPI.Controllers;
 using MossadAgentAPI.Services;
 using MossadAgentAPI.Models;
 using MossadAgentAPI.Enums;
-using IronDomeApi.Utils;
+using MossadAgentAPI.Utils;
 using System.Security.Cryptography.Xml;
 using System.Reflection;
+using Microsoft.IdentityModel.Tokens;
 
 namespace MossadAgentAPI.Controllers
 {
@@ -40,6 +41,48 @@ namespace MossadAgentAPI.Controllers
                 );
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetMissionDetails()
+        {
+            int status = StatusCodes.Status200OK;
+            var missions = await _context.missions.ToListAsync();
+            var missionDetails = new List<object>();
+            foreach (var mission in missions)
+            {
+                var agent = await _context.agents
+                    .Include(a => a.Location)
+                    .FirstOrDefaultAsync(a => a.Id == mission.AgentId);
+
+                var target = await _context.Targets
+                    .Include(t => t.Location)
+                    .FirstOrDefaultAsync(t => t.Id == mission.TargetId);
+
+                if (agent == null || target == null) continue;
+
+                var distance = _distanceCalculate.CalculateDistance(agent.Location, target.Location);
+                missionDetails.Add(new
+                {
+                    MissionId = mission.Id,
+                    AgentId = mission.AgentId,
+                    AgentNickname = agent.Nickname,
+                    AgentLocation = agent.Location,
+                    TargetId = mission.TargetId,
+                    TargetName = target.Name,
+                    TargetRole = target.Role,
+                    TargetLocation = target.Location,
+                    Distance = distance,
+                    TimeLeft = mission.TimeLeft,
+                    ExecutionTime = mission.ExecutionTime,
+                    Status = mission.Status
+                });
+            }
+
+            return StatusCode(
+                status,
+                HttpUtils.Response(status, new { missionDetails = missionDetails })
+            );
+        }
+
 
         [HttpPut("{id}")]
         [Produces("application/json")]
@@ -52,6 +95,8 @@ namespace MossadAgentAPI.Controllers
                 status = StatusCodes.Status404NotFound;
                 return StatusCode(status, HttpUtils.Response(status, "mission not found"));
             }
+            var agent = await _context.agents.FirstOrDefaultAsync(a => a.Id == mission.AgentId);
+            agent.Status = AgentStatus.Active;
             mission.Status = MissionStatus.Active;
             this._context.missions.Update(mission);
             await this._context.SaveChangesAsync();
@@ -61,7 +106,7 @@ namespace MossadAgentAPI.Controllers
 
 
         [HttpPost("update")]
-        public async Task<IActionResult> UpdateTimeLeft()
+        public async Task<IActionResult> UpdateToKill()
         {
             int status = StatusCodes.Status200OK;
             var missions = await _context.missions.ToArrayAsync();
@@ -70,14 +115,14 @@ namespace MossadAgentAPI.Controllers
                 if (mission.Status == MissionStatus.Active)
                 {
                     var agent = await _context.agents.Include(a => a.location).FirstOrDefaultAsync(a => a.Id == mission.AgentId);
-                    var target = await _context.targets.Include(t => t.location).FirstOrDefaultAsync(t => t.Id == mission.AgentId);
+                    var target = await _context.targets.Include(t => t.location).FirstOrDefaultAsync(t => t.Id == mission.TargetId);
                     if (agent == null || target == null)
                     {
                         return StatusCode(StatusCodes.Status404NotFound, "Agent or Target not found for mission");
                     }
                     mission.TimeLeft = this._distanceCalculate.CalculateDistance(agent.location, target.location);
                     string MoveDirection = this._missionService.MovingDirection(agent.location, target.location);
-                    if (MoveDirection == null)
+                    if (MoveDirection.IsNullOrEmpty())
                     {
                         agent.Status = AgentStatus.Inactive;
                         target.Status = TargetStatus.Die;
@@ -86,10 +131,12 @@ namespace MossadAgentAPI.Controllers
                         this._context.agents.Update(agent);
                         this._context.targets.Update(target);
                         this._context.missions.Update(mission);
-
                     }
-                    DirectionService.DirectionActions[MoveDirection](agent.location);
-                    this._context.agents.Update(agent);
+                    else
+                    {
+                        DirectionService.DirectionActions[MoveDirection](agent.location);
+                        this._context.agents.Update(agent);
+                    }
                     await this._context.SaveChangesAsync();
                 }
             }

@@ -22,11 +22,7 @@ namespace MossadAgentAPI.Services
             var targets = _context.targets.Include(ag => ag.location).ToList();
             foreach (var target in targets) 
             {
-                var distance = _distanceCheck.CalculateDistance(agent.location, target.location);
-                if (distance < +200)
-                {
-                    CreateMission(agent, target);
-                }
+                CheckMission(agent, target);
             }
         }
         public void CalculateMissionT(Target target)
@@ -34,8 +30,18 @@ namespace MossadAgentAPI.Services
             var agents = this._context.agents.Include(ta => ta.location).ToList();
             foreach (var agent in agents)
             {
-                var distance = _distanceCheck.CalculateDistance(agent.location, target.location);
-                if (distance < +200)
+                CheckMission(agent, target);
+            }
+        }
+
+        private void CheckMission(Agent agent, Target target)
+        {
+            var distance = _distanceCheck.CalculateDistance(agent.location, target.location);
+            if (distance< +200)
+            {
+                bool missionExists = _context.missions.Any(m => m.AgentId == agent.Id && m.TargetId == target.Id);
+
+                if (!missionExists)
                 {
                     CreateMission(agent, target);
                 }
@@ -67,7 +73,7 @@ namespace MossadAgentAPI.Services
             if (dirY > 0) { dir += "s"; }
             if (dirX > 0) { dir += "e"; }
             if (dirX < 0) { dir += "w"; }
-
+                
             return dir;
         }
     }

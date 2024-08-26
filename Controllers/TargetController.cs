@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using MossadAgentAPI.Services;
 using MossadAgentAPI.Models;
 using MossadAgentAPI.Enums;
-using IronDomeApi.Utils;
+using MossadAgentAPI.Utils;
 using System.Security.Cryptography.Xml;
 
 namespace MossadAgentAPI.Controllers
@@ -30,7 +30,7 @@ namespace MossadAgentAPI.Controllers
         public async Task<IActionResult> GetTargets()
         {
             int status = StatusCodes.Status200OK;
-            var targets = await _context.targets.Include(t => t.location)?.ToArrayAsync();
+            var targets = await _context.targets.Include(t => t.location).ToArrayAsync();
             return StatusCode(
                 status,
                 HttpUtils.Response(status, new { targets = targets })
