@@ -9,16 +9,16 @@ using System.Security.Cryptography.Xml;
 
 namespace MossadAgentAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
-    public class TargetController : ControllerBase
+    public class TargetsController : ControllerBase
     {
         private readonly MossadAgentContext _context;
-        private readonly ILogger<TargetController> _logger;
+        private readonly ILogger<TargetsController> _logger;
         private readonly MissionService _missionService;
 
 
-        public TargetController(ILogger<TargetController> logger, MossadAgentContext context, MissionService missionService)
+        public TargetsController(ILogger<TargetsController> logger, MossadAgentContext context, MissionService missionService)
         {
 
             this._context = context;
@@ -43,22 +43,18 @@ namespace MossadAgentAPI.Controllers
         public async Task<IActionResult> CreateTarget(Target target)
         {
             int status;
-            if (target.location == null)
-            {
-                target.location = new Location();
-            }
             target.Status = TargetStatus.Live;
             this._context.targets.Add(target);
-            await Task.Run(async () =>
-            {
-                await this._missionService.CalculateMissionTAsync(target);
-            });
+            //await Task.Run(async () =>
+            //{
+            //    await this._missionService.CalculateMissionTAsync(target);
+            //});
             await this._context.SaveChangesAsync();
             status = StatusCodes.Status201Created;
-            return StatusCode(
-                status,
-                HttpUtils.Response(status, new { target = target })
-                );
+            return StatusCode(status, new { id = target.Id });
+                //status,
+                //HttpUtils.Response(status, new { target = target })
+                //);
         }
 
         [HttpPut("{id}/pin")]

@@ -8,16 +8,16 @@ using MossadAgentAPI.Utils;
 
 namespace MossadAgentAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
-    public class AgentController : ControllerBase
+    public class AgentsController : ControllerBase
     {
         private readonly MossadAgentContext _context;
-        private readonly ILogger<AgentController> _logger;
+        private readonly ILogger<AgentsController> _logger;
         private readonly MissionService _missionService;
 
 
-        public AgentController(ILogger<AgentController> logger, MossadAgentContext context, MissionService missionService)
+        public AgentsController(ILogger<AgentsController> logger, MossadAgentContext context, MissionService missionService)
         {
 
             this._context = context;
@@ -42,22 +42,18 @@ namespace MossadAgentAPI.Controllers
         public async Task<IActionResult> CreateAgent(Agent agent)
         {
             int status;
-            if (agent.location == null)
-            {
-                agent.location = new Location();
-            }
             agent.Status = AgentStatus.Inactive;
             this._context.agents.Add(agent);
+            //await Task.Run(async () =>
+            //{
+            //    await this._missionService.CalculateMissionAAsync(agent);
+            //});
             await this._context.SaveChangesAsync();
-            await Task.Run(async () =>
-            {
-                await this._missionService.CalculateMissionAAsync(agent);
-            });
             status = StatusCodes.Status201Created;
-            return StatusCode(
-                status,
-                HttpUtils.Response(status, new { agent = agent })
-                );
+            return StatusCode(status, new { id = agent.Id });
+                //status,
+                //HttpUtils.Response(status, new { id = agent.Id })
+                //);
         }
 
         [HttpPut("{id}/pin")]

@@ -20,24 +20,30 @@ namespace MossadAgentAPI.Services
         public async Task CalculateMissionAAsync(Agent agent)
         {
             var targets = await _context.targets.Include(ag => ag.location).ToListAsync();
-            foreach (var target in targets)
+            if (targets.Any()) 
             {
-                var distance = _distanceCheck.CalculateDistance(agent.location, target.location);
-                if (distance < +200)
+                foreach (var target in targets)
                 {
-                    await CreateMissionAsync(agent, target);
+                    var distance = _distanceCheck.CalculateDistance(agent.location, target.location);
+                    if (distance < +200)
+                    {
+                        await CreateMissionAsync(agent, target);
+                    }
                 }
             }
         }
         public async Task CalculateMissionTAsync(Target target)
         {
             var agents = await this._context.agents.Include(ta => ta.location).ToListAsync();
-            foreach (var agent in agents)
+            if (agents.Any())
             {
-                var distance = _distanceCheck.CalculateDistance(agent.location, target.location);
-                if (distance < +200)
+                foreach (var agent in agents)
                 {
-                    await CreateMissionAsync(agent, target);
+                    var distance = _distanceCheck.CalculateDistance(agent.location, target.location);
+                    if (distance < +200)
+                    {
+                        await CreateMissionAsync(agent, target);
+                    }
                 }
             }
         }

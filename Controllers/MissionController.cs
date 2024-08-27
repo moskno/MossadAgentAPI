@@ -12,7 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace MossadAgentAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class MissionController : ControllerBase
     {
@@ -30,16 +30,16 @@ namespace MossadAgentAPI.Controllers
             this._distanceCalculate = distanceCalculate;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetMissions()
-        {
-            int status = StatusCodes.Status200OK;
-            var missions = await _context.missions.ToArrayAsync();
-            return StatusCode(
-            status,
-                HttpUtils.Response(status, new { missions = missions })
-                );
-        }
+        //[HttpGet]
+        //public async Task<IActionResult> GetMissions()
+        //{
+        //    int status = StatusCodes.Status200OK;
+        //    var missions = await _context.missions.ToArrayAsync();
+        //    return StatusCode(
+        //    status,
+        //        HttpUtils.Response(status, new { missions = missions })
+        //        );
+        //}
 
         [HttpGet("details")]
         public async Task<IActionResult> GetAllMissionDetails()
@@ -82,17 +82,17 @@ namespace MossadAgentAPI.Controllers
                 {
                     MissionId = mission.Id,
                     AgentId = mission.AgentId,
-                    AgentNickname = agent.Nickname,
+                    AgentNickname = agent.nickname,
                     AgentLocation = agent.location,
                     TargetId = mission.TargetId,
-                    TargetName = target.Name,
-                    TargetRole = target.Role,
+                    TargetName = target.name,
+                    TargetRole = target.position,
                     TargetLocation = target.location,
                     Distance = distance,
                     TimeLeft = mission.TimeLeft,
                     ExecutionTime = mission.ExecutionTime,
                     Status = mission.Status
-                });
+                }); 
             }
             return missionDetails;
         }
@@ -142,6 +142,7 @@ namespace MossadAgentAPI.Controllers
                         agent.Status = AgentStatus.Inactive;
                         target.Status = TargetStatus.Die;
                         target.location = null;
+                        mission.ExecutionTime = TimeOnly.FromDateTime(DateTime.Now);
                         mission.Status = MissionStatus.Completed;
                         this._context.agents.Update(agent);
                         this._context.targets.Update(target);

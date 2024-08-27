@@ -10,7 +10,7 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace MossadAgentAPI.Controllers;
 
-[Route("api/[controller]")]
+[Route("[controller]")]
 [ApiController]
 public class UserController : ControllerBase
 {
@@ -56,10 +56,8 @@ public class UserController : ControllerBase
         {
 
             // getting the user (requester) IP
-            string userIP = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-
             return StatusCode(200
-                , new { token = GenerateToken(userIP) }
+                , new { token = "Subulu" }
                 );
         }
         return StatusCode(StatusCodes.Status401Unauthorized,

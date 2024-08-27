@@ -15,7 +15,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<MossadAgentContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddDbContext<MossadAgentContext>(option => option.UseSqlServer(connectionString));
 
 builder.Services.AddScoped<DistanceCalculate>();
 builder.Services.AddScoped<MissionService>();
